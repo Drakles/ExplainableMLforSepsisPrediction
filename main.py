@@ -4,35 +4,43 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 def prepare_dataset(df):
-    patient_IDs = set(df['PatientID'])
+    patient_IDs = np.unique(df['PatientID'])
+    feature_columns = df.columns[1:].values
 
-    patients = np.array()
+    patients = pd.DataFrame(data=[], columns=df.columns)
     for patient_ID in patient_IDs:
         patient_id_df = df[df['PatientID'] == patient_ID]
-        patient_id_df.set_index('TimeStampScaled')
-        patient_nd_arr = np.array(patient_id_df)
-        np.append(patients, patient_nd_arr,axis=0)
+        columns_series = [patient_id_df[col_series] for col_series
+                          in feature_columns]
+        patients = patients.append(pd.DataFrame(np.array([patient_ID] +
+                                                       columns_series,
+                                                         dtype=object)
+                                     .reshape(1, 5),
+                                     columns=df.columns))
 
-    return patients
+    return patients.set_index('PatientID')
 
 
 def top_n_features_with_least_nan(df, n):
-    print(df.isna().sum().sort_values()[5:5+n])
+    return df.isna().sum().sort_values()[5:5 + n].index.values
 
 
 if __name__ == '__main__':
-    non_sepsis_series_df = pd.read_csv('data/FinalNonSepsisSeries.csv')
+    df = pd.read_csv('data/FinalNonSepsisSeries.csv')
 
     # print(top_n_features_with_least_nan(non_sepsis_series_df,n=5))
 
-    non_sepsis_series_df['TimeStamp'] = non_sepsis_series_df['Day'] \
-                                            .astype(int) \
-                                        * 24 + \
-                                        non_sepsis_series_df['OrdinalHour'] \
-                                            .astype(int)
+    df['TimeStamp'] = df['Day'].astype(int) * 24 + df['OrdinalHour'].astype(int)
 
+    # df with top n features with the least number of nan values
+    df = df[df.isna().sum().sort_values()[0:10].index.values]
+    # drop irrelevant features
+    df = df.drop(
+        columns=['comorbidity', 'Mortality14Days', 'Day', 'OrdinalHour',
+                 'TimeStamp'])
 
     # non_sepsis_series_df['TimeStampScaled'] = MinMaxScaler().fit_transform(
     #     np.array(non_sepsis_series_df['TimeStamp']).reshape(-1, 1))
 
-    # dataset = prepare_dataset(non_sepsis_series_df)
+    dataset = prepare_dataset(df)
+    print(dataset.describe())
