@@ -1,5 +1,10 @@
-import numpy as np
 import pandas as pd
+
+
+def transform_series(series):
+    return series \
+    .interpolate() \
+    .interpolate(method='bfill')
 
 
 def prepare_dataset(df):
@@ -7,22 +12,19 @@ def prepare_dataset(df):
     df = df[top_n_features_with_least_nan(df, 5)]
 
     # drop irrelevant features
-    df = df.drop(columns=['comorbidity', 'Mortality14Days', 'Day','OrdinalHour'])
+    df = df.drop(
+        columns=['comorbidity', 'Mortality14Days', 'Day', 'OrdinalHour'])
 
-    patient_IDs = np.unique(df['PatientID'])
     feature_columns = df.columns[1:].values
 
-    patients = pd.DataFrame(data=[], columns=df.columns)
-    for patient_ID in patient_IDs:
-        patient_id_df = df[df['PatientID'] == patient_ID]
-        columns_series = [patient_id_df[col_series] for col_series
-                          in feature_columns]
+    patients = {}
 
-        patients = patients.append(pd.DataFrame(
-            np.array([patient_ID] + columns_series, dtype=object)
-                .reshape(1, 6), columns=df.columns))
+    for id, patient_id_df in df.groupby('PatientID'):
+        patients[id] = [id] + [transform_series(patient_id_df[col_series]) for
+                          col_series in feature_columns]
 
-    return patients.set_index('PatientID')
+    return pd.DataFrame. \
+        from_dict(patients, "index", columns=df.columns).set_index('PatientID')
 
 
 def top_n_features_with_least_nan(df, n):
