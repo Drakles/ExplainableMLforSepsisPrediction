@@ -3,8 +3,8 @@ import pandas as pd
 
 def transform_series(series):
     return series \
-    .interpolate() \
-    .interpolate(method='bfill')
+        .interpolate() \
+        .interpolate(method='bfill')
 
 
 def prepare_dataset(df):
@@ -17,14 +17,16 @@ def prepare_dataset(df):
 
     feature_columns = df.columns[1:].values
 
-    patients = {}
+    patient_id_series = {}
 
     for id, patient_id_df in df.groupby('PatientID'):
-        patients[id] = [id] + [transform_series(patient_id_df[col_series]) for
-                          col_series in feature_columns]
+        patient_id_series[id] = [id] + \
+                                [transform_series(patient_id_df[col_series])
+                                 for col_series in feature_columns]
 
     return pd.DataFrame. \
-        from_dict(patients, "index", columns=df.columns).set_index('PatientID')
+        from_dict(patient_id_series, "index", columns=df.columns) \
+        .set_index('PatientID')
 
 
 def top_n_features_with_least_nan(df, n):
