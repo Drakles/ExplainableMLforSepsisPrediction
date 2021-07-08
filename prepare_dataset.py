@@ -22,6 +22,7 @@ def prepare_dataset(df):
     for id, patient_id_df in df.groupby('PatientID'):
         patient_id_series[id] = [id] + \
                                 [transform_series(patient_id_df[col_series])
+                                     .reset_index(drop=True)
                                  for col_series in feature_columns]
 
     return pd.DataFrame. \

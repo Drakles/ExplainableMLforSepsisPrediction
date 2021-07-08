@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sktime.classification.compose import ColumnEnsembleClassifier
-from sktime.classification.interval_based import TimeSeriesForestClassifier
-from sktime.classification.shapelet_based import MrSEQLClassifier
-from sktime.transformations.panel.compose import ColumnConcatenator
+from sktime.classification.compose import TimeSeriesForestClassifier, \
+    ColumnEnsembleClassifier
+from sktime.transformers.series_as_features.compose import ColumnConcatenator
+from sktime_dl.deeplearning import EncoderClassifier
 
 from prepare_dataset import prepare_dataset
 
@@ -42,13 +42,6 @@ def column_ensemble(X_train, y_train):
     return clf
 
 
-def mrSELQ_clf(X_train, y_train):
-    clf = MrSEQLClassifier()
-    clf.fit(X_train, y_train)
-
-    return clf
-
-
 if __name__ == '__main__':
     non_sepsis_raw_df = pd.read_csv('data/FinalNonSepsisSeries.csv')
     non_sepsis_df = prepare_dataset(non_sepsis_raw_df)
@@ -58,14 +51,5 @@ if __name__ == '__main__':
     X_train, X_test, y_train, y_test = get_train_test_dataset(non_sepsis_df,
                                                               sepsis_df)
 
-    # first approach
-    clf = column_concatenate_clf(X_train, y_train)
-    print(clf.score(X_test, y_test))
-
-    # second
-    clf = column_ensemble(X_train, y_train)
-    print(clf.score(X_test, y_test))
-
-    # third
-    clf = mrSELQ_clf(X_train, y_train)
-    print(clf.score(X_test, y_test))
+    network = EncoderClassifier(nb_epochs=5, verbose=True)
+    network.fit(X_train, y_train)
