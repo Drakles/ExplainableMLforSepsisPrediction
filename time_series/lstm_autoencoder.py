@@ -9,7 +9,7 @@ from keras.models import Sequential
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sktime_dl.utils import check_and_clean_data
 
-from prepare_dataset import prepare_dataset
+from prepare_dataset import prepare_time_series_dataset
 
 
 def one_hot_encode(y):
@@ -44,7 +44,7 @@ def get_model(input_shape):
 
 if __name__ == '__main__':
     non_sepsis_raw_df = pd.read_csv('../data/FinalNonSepsisSeries.csv')
-    non_sepsis_df = prepare_dataset(non_sepsis_raw_df)
+    non_sepsis_df = prepare_time_series_dataset(non_sepsis_raw_df)
 
     # non_sepsis_df = prepare_dataset_lstm_autoencoder(non_sepsis_raw_df)
     # sepsis_raw_df = pd.read_csv('data/FinalSepsisSeries.csv')

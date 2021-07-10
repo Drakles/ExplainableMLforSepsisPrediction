@@ -7,7 +7,7 @@ def transform_series(series):
         .interpolate(method='bfill')
 
 
-def prepare_dataset(df):
+def prepare_time_series_dataset(df):
     # df with top n features with the least number of nan values
     df = df[top_n_features_with_least_nan(df, 5)]
 
@@ -37,5 +37,5 @@ def top_n_features_with_least_nan(df, n):
 if __name__ == '__main__':
     df = pd.read_csv('../data/FinalNonSepsisSeries.csv')
 
-    dataset = prepare_dataset(df)
+    dataset = prepare_time_series_dataset(df)
     print(dataset.describe())
