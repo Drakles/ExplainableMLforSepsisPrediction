@@ -5,9 +5,9 @@ from prepare_dataset import prepare_dataset
 from sktime_experiment import get_train_test_dataset, column_concatenate_clf
 
 if __name__ == '__main__':
-    non_sepsis_raw_df = pd.read_csv('data/FinalNonSepsisSeries.csv')
+    non_sepsis_raw_df = pd.read_csv('../data/FinalNonSepsisSeries.csv')
     non_sepsis_df = prepare_dataset(non_sepsis_raw_df)
-    sepsis_raw_df = pd.read_csv('data/FinalSepsisSeries.csv')
+    sepsis_raw_df = pd.read_csv('../data/FinalSepsisSeries.csv')
     sepsis_df = prepare_dataset(sepsis_raw_df)
 
     X_train, X_test, y_train, y_test = get_train_test_dataset(non_sepsis_df,

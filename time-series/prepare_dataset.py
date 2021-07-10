@@ -35,7 +35,7 @@ def top_n_features_with_least_nan(df, n):
 
 
 if __name__ == '__main__':
-    df = pd.read_csv('data/FinalNonSepsisSeries.csv')
+    df = pd.read_csv('../data/FinalNonSepsisSeries.csv')
 
     dataset = prepare_dataset(df)
     print(dataset.describe())

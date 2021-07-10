@@ -43,7 +43,7 @@ def get_model(input_shape):
 
 
 if __name__ == '__main__':
-    non_sepsis_raw_df = pd.read_csv('data/FinalNonSepsisSeries.csv')
+    non_sepsis_raw_df = pd.read_csv('../data/FinalNonSepsisSeries.csv')
     non_sepsis_df = prepare_dataset(non_sepsis_raw_df)
 
     # non_sepsis_df = prepare_dataset_lstm_autoencoder(non_sepsis_raw_df)
