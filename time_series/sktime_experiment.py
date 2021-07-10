@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sktime.classification.compose import TimeSeriesForestClassifier, \
@@ -10,12 +11,17 @@ from time_series.prepare_dataset import prepare_time_series_dataset
 from utils import get_train_test_time_series_dataset
 
 
-def read_prepare_dataset():
+def read_prepare_series_dataset():
     non_sepsis_raw_df = pd.read_csv('data/FinalNonSepsisSeries.csv')
-    non_sepsis_df = prepare_time_series_dataset(non_sepsis_raw_df)
+    series_non_sepsis_df = prepare_time_series_dataset(non_sepsis_raw_df)
     sepsis_raw_df = pd.read_csv('data/FinalSepsisSeries.csv')
-    sepsis_df = prepare_time_series_dataset(sepsis_raw_df)
-    return non_sepsis_df, sepsis_df
+    series_sepsis_df = prepare_time_series_dataset(sepsis_raw_df)
+
+    series_non_sepsis_df = series_non_sepsis_df[
+        ~series_non_sepsis_df.index.isin(series_sepsis_df.index.values)]
+
+    return series_non_sepsis_df, series_sepsis_df
+
 
 def column_concatenate_clf(X_train, y_train):
     steps = [
@@ -36,17 +42,15 @@ def get_estimators(nb_features):
             (
                 "TSF" + str(i), TimeSeriesForestClassifier(
                     n_estimators=1,
-                    class_weight='balanced',
-                    verbose=True), [i])
+                    class_weight='balanced'), [i])
         )
     return estimators
 
 
 def column_ensemble(X_train, y_train):
     steps = [('classify', ColumnEnsembleClassifier(
-        estimators=get_estimators(nb_features=5)),
-              )]
-    clf = Pipeline(steps, verbose=True)
+        estimators=get_estimators(nb_features=5)),)]
+    clf = Pipeline(steps)
     clf.fit(X_train, y_train)
 
     return clf
@@ -66,27 +70,28 @@ def MCDCNN():
 
 
 def fit_predict_time_series():
-    non_sepsis_df, sepsis_df = read_prepare_dataset()
+    series_non_sepsis_df, series_sepsis_df = read_prepare_series_dataset()
 
-    (X_train, X_test, y_train, y_test), X, y = get_train_test_time_series_dataset(
-        non_sepsis_df,
-        sepsis_df)
+    (X_train, X_test, y_train,
+     y_test), X, y = get_train_test_time_series_dataset(
+        series_non_sepsis_df,
+        series_sepsis_df)
 
-    # model = column_concatenate_clf(X_train, y_train)
     model = column_ensemble(X_train, y_train)
-    df_pred = pd.DataFrame(model.predict(X), columns=['TimeSeriesFeaturesPred'])
-    df_pred['PatientID'] = X.index
+    # print(model.score(X_test, y_test))
+    df_pred = pd.DataFrame(data={'TSPred': model.predict(X),
+                                 'PatientID': np.array(X.index, dtype=int)})
 
-    return df_pred
+    return df_pred, X, y
 
 
 if __name__ == '__main__':
-    non_sepsis_df, sepsis_df = read_prepare_dataset()
+    non_sepsis_df, sepsis_df = read_prepare_series_dataset()
 
-    (X_train, X_test, y_train, y_test), X, y = get_train_test_time_series_dataset(
+    (X_train, X_test, y_train,
+     y_test), X, y = get_train_test_time_series_dataset(
         non_sepsis_df,
         sepsis_df)
 
-    # model = column_concatenate_clf(X_train, y_train)
     model = column_ensemble(X_train, y_train)
     print(model.score(X_test, y_test))
