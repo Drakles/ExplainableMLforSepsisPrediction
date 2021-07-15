@@ -1,9 +1,12 @@
 import pandas as pd
 import xgboost as xgb
+from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-from time_series.sktime_experiment import fit_predict_time_series_column_ensemble
+from time_series.sktime_experiments import \
+    fit_predict_time_series_column_ensemble, \
+    fit_predict_time_series_separate_classification
 from utils import merge_static_series_pred
 
 
@@ -24,22 +27,33 @@ def read_prepare_static_data():
 
 def get_xgboost_X_enhanced():
     df_static_sepsis, df_static_non_sepsis = read_prepare_static_data()
-    df_ts_pred, X_series = fit_predict_time_series_column_ensemble()
+    # df_ts_pred, X_series = fit_predict_time_series_column_ensemble()
+    df_ts_pred, X_series = fit_predict_time_series_separate_classification()
     X, y = merge_static_series_pred(df_static_non_sepsis,
                                     df_static_sepsis,
                                     df_ts_pred)
 
-    le = LabelEncoder()
-    X['TSPred'] = le.fit_transform(X['TSPred'])
+    encoders = []
+    for column_name in df_ts_pred.columns[1:]:
+        le = LabelEncoder()
+        X[column_name] = le.fit_transform(X[column_name])
+        encoders.append(le)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=2137)
     model = xgb.XGBClassifier()
     model.fit(X_train, y_train)
-    print(model.score(X_test, y_test))
+    print('mean accuracy: ' + str(model.score(X_test, y_test)))
+    print('f1 score: ' + str(f1_score(y_test, model.predict(X_test),
+                                      average='weighted')))
 
+    # build X_display
     X_display = X.__deepcopy__()
-    X_display['TSPred'] = le.inverse_transform(X_display['TSPred'])
-    return model, X, X_display
+    for i in range(len(df_ts_pred.columns) - 1):
+        column_name = df_ts_pred.columns[i + 1]
+        le = encoders[i]
+        X_display[column_name] = le.inverse_transform(X[column_name])
+
+    return model, X, X_display, y
 
 
 if __name__ == '__main__':

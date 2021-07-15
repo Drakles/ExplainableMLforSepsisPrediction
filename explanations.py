@@ -5,6 +5,9 @@ import shap
 from static_data import get_xgboost_X_enhanced
 
 
+# notebook for dependency plot:
+# https://slundberg.github.io/shap/notebooks/plots/dependence_plot.html
+
 def get_interaction_values(explainer, X_display):
     return explainer.shap_interaction_values(X_display)
 
@@ -13,8 +16,8 @@ def summary_plot(shap_interaction_values, X_display):
     shap.summary_plot(shap_interaction_values, X_display)
 
 
-def dependency_plot_by_feature(feature, shap_values, X_display):
-    shap.dependence_plot(feature, shap_values, X_display)
+def dependency_plot_by_feature(column_index, X):
+    shap.dependence_plot(column_index, explainer.shap_values(X), X)
 
 
 def beeswarm_plot(explainer, X):
@@ -48,7 +51,7 @@ def single_force_plot(explainer, shap_values, X_display, index):
 
 
 if __name__ == '__main__':
-    model, X, X_display = get_xgboost_X_enhanced()
+    model, X, X_display, y = get_xgboost_X_enhanced()
 
     explainer = shap.TreeExplainer(model)
     shap_values = explainer(X)

@@ -3,7 +3,7 @@ import pandas as pd
 
 def transform_series(series):
     return series \
-        .interpolate(method='pad',limit_direction='forward') \
+        .interpolate(method='pad', limit_direction='forward') \
         .interpolate(method='bfill')
 
 

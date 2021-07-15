@@ -5,17 +5,15 @@ from sklearn.pipeline import Pipeline
 from sktime.classification.compose import TimeSeriesForestClassifier, \
     ColumnEnsembleClassifier
 from sktime.transformers.series_as_features.compose import ColumnConcatenator
-from sktime_dl.deeplearning import MCDCNNClassifier
-from tensorflow.python.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 from time_series.prepare_dataset import prepare_time_series_dataset
 from utils import get_train_test_time_series_dataset
 
 
 def read_prepare_series_dataset():
-    non_sepsis_raw_df = pd.read_csv('../data/FinalNonSepsisSeries.csv')
+    non_sepsis_raw_df = pd.read_csv('data/FinalNonSepsisSeries.csv')
     series_non_sepsis_df = prepare_time_series_dataset(non_sepsis_raw_df)
-    sepsis_raw_df = pd.read_csv('../data/FinalSepsisSeries.csv')
+    sepsis_raw_df = pd.read_csv('data/FinalSepsisSeries.csv')
     series_sepsis_df = prepare_time_series_dataset(sepsis_raw_df)
 
     series_non_sepsis_df = series_non_sepsis_df[
@@ -87,12 +85,14 @@ def fit_predict_time_series_separate_classification():
         X_one_column = pd.DataFrame(X.iloc[:, f_index])
         X_train, X_test, y_train, y_test = train_test_split(X_one_column, y,
                                                             random_state=2137)
-        feature_name = str(X.columns[f_index])
-        print('feature: ' + feature_name)
+        feature_name = str(X.columns[f_index]) \
+            .replace('[', '-') \
+            .replace(']', '')
+        # print('feature: ' + feature_name)
         clf = TimeSeriesForestClassifier(n_estimators=1,
                                          class_weight='balanced')
         clf.fit(X_train, y_train)
-        print(clf.score(X_test, y_test))
+        # print(clf.score(X_test, y_test))
 
         predictions_per_feature[feature_name] = clf.predict(X_one_column)
 
