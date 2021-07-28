@@ -4,19 +4,11 @@ from sklearn.impute import KNNImputer
 
 def summary_missing_val(dataframe):
     # summarize the number of rows with missing values for each column
-    for i in range(dataframe.shape[1]):
+    for col in dataframe:
         # count number of rows with missing values
-        n_miss = dataframe[[i]].isnull().sum()
+        n_miss = dataframe[col].isnull().sum()
         perc = n_miss / dataframe.shape[0] * 100
-        print('> %d, Missing: %d (%.1f%%)' % (i, n_miss, perc))
-
-
-def transform_series(series, horizont):
-    # return series \
-    #     .interpolate(method='pad', limit_direction='forward') \
-    #     .interpolate(method='bfill') \
-    #     .tail(horizont)
-    return series.tail(horizont)
+        print('> column %s, Missing: %d (%.1f%%)' % (col, n_miss, perc))
 
 
 def prepare_time_series_dataset(df, nb_features, selected_features):
@@ -30,27 +22,19 @@ def prepare_time_series_dataset(df, nb_features, selected_features):
     # drop all columns with no features
     df = df.dropna(axis=1, how='all')
 
-    # drop irrelevant features
-    # df = df.drop(
-    #     columns=['Day', 'OrdinalHour', 'Mortality14Days'])
-
     for column in selected_features[1:]:
         df[column] = df[column] \
             .interpolate(method='pad', limit_direction='forward') \
             .interpolate(method='bfill')
 
-    imputer = KNNImputer(n_neighbors=5, weights='distance',
-                         metric='nan_euclidean')
-
-    Xtrans = imputer.fit_transform(df)
-
-    df = pd.DataFrame(data=Xtrans, columns=df.columns)
+    df = knn_imputing(df)
 
     patient_id_series = {}
 
     for id, patient_id_df in df.groupby('PatientID'):
         patient_id_series[id] = [id] + \
-                                [transform_series(patient_id_df[col_series], 24)
+                                [patient_id_df[col_series]
+                                     .tail(24)
                                      .reset_index(drop=True)
                                  for col_series in selected_features[1:]]
 
@@ -59,6 +43,14 @@ def prepare_time_series_dataset(df, nb_features, selected_features):
         .set_index('PatientID')
 
     return resultd_df
+
+
+def knn_imputing(df):
+    imputer = KNNImputer(n_neighbors=5, weights='distance',
+                         metric='nan_euclidean')
+    Xtrans = imputer.fit_transform(df)
+    df = pd.DataFrame(data=Xtrans, columns=df.columns)
+    return df
 
 
 def top_n_features_with_least_nan(df, n):

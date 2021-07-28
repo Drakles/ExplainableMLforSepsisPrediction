@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
-from sklearn.impute import KNNImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sktime.classification.compose import TimeSeriesForestClassifier, \
     ColumnEnsembleClassifier
 from sktime.transformers.series_as_features.compose import ColumnConcatenator
 
-from time_series.prepare_dataset import prepare_time_series_dataset
+from time_series.prepare_dataset import prepare_time_series_dataset, \
+    summary_missing_val
 from utils import get_train_test_time_series_dataset
 
 
@@ -15,7 +15,13 @@ def read_prepare_series_dataset():
     non_sepsis_raw_df = pd.read_csv('../data/FinalNonSepsisSeries.csv')
     sepsis_raw_df = pd.read_csv('../data/FinalSepsisSeries.csv')
 
-    columns_to_drop = ['PatientID','Day', 'OrdinalHour', 'Mortality14Days']
+    # print('missing for non sepsis')
+    # summary_missing_val(non_sepsis_raw_df)
+    #
+    # print('missing for sepsis')
+    # summary_missing_val(sepsis_raw_df)
+
+    columns_to_drop = ['PatientID', 'Day', 'OrdinalHour', 'Mortality14Days']
 
     # shared features
     columns = sorted(list(set(sepsis_raw_df.columns.values)
@@ -104,11 +110,11 @@ def fit_predict_time_series_separate_classification():
         feature_name = str(X.columns[f_index]) \
             .replace('[', '-') \
             .replace(']', '')
-        print('feature: ' + feature_name)
         clf = TimeSeriesForestClassifier(n_estimators=1,
                                          class_weight='balanced')
         clf.fit(X_train, y_train)
-        print(clf.score(X_test, y_test))
+        # print('feature: ' + feature_name)
+        # print(clf.score(X_test, y_test))
 
         predictions_per_feature[feature_name] = clf.predict(X_one_column)
 
