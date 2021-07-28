@@ -5,7 +5,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 from time_series.sktime_experiments import \
-    fit_predict_time_series_column_ensemble, \
     fit_predict_time_series_separate_classification
 from utils import merge_static_series_pred
 
@@ -19,6 +18,7 @@ def read_prepare_static_data():
     df_static_sepsis = df_static_sepsis.drop('deathperiod',
                                              axis='columns')
 
+    # exclude patients from non sepsis if they are in sepsis file
     df_static_non_sepsis = df_static_non_sepsis[
         ~df_static_non_sepsis.index.isin(df_static_sepsis.index.values)]
 
@@ -27,7 +27,6 @@ def read_prepare_static_data():
 
 def get_xgboost_X_enhanced():
     df_static_sepsis, df_static_non_sepsis = read_prepare_static_data()
-    # df_ts_pred, X_series = fit_predict_time_series_column_ensemble()
     df_ts_pred, X_series = fit_predict_time_series_separate_classification()
     X, y = merge_static_series_pred(df_static_non_sepsis,
                                     df_static_sepsis,
