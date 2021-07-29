@@ -13,8 +13,8 @@ from utils import get_train_test_time_series_dataset
 
 
 def read_prepare_series_dataset():
-    non_sepsis_raw_df = pd.read_csv('./data/FinalNonSepsisSeries.csv')
-    sepsis_raw_df = pd.read_csv('./data/FinalSepsisSeries.csv')
+    df_series_non_sepsis = pd.read_csv('./data/FinalNonSepsisSeries.csv')
+    df_series_sepsis = pd.read_csv('./data/FinalSepsisSeries.csv')
 
     # print('missing for non sepsis')
     # summary_missing_val(non_sepsis_raw_df)
@@ -26,17 +26,17 @@ def read_prepare_series_dataset():
                        'comorbidity', 'Admit Ht']
 
     # shared features
-    columns = sorted(list(set(sepsis_raw_df.columns.values)
-                          .intersection(non_sepsis_raw_df.columns.values)))
+    columns = sorted(list(set(df_series_sepsis.columns.values)
+                          .intersection(df_series_non_sepsis.columns.values)))
     columns = [col for col in columns if col not in columns_to_drop]
     columns.insert(0, 'PatientID')
 
-    series_non_sepsis_df = prepare_time_series_dataset(non_sepsis_raw_df,
-                                                       len(non_sepsis_raw_df.columns),
+    series_non_sepsis_df = prepare_time_series_dataset(df_series_non_sepsis,
+                                                       len(df_series_non_sepsis.columns),
                                                        columns)
 
-    series_sepsis_df = prepare_time_series_dataset(sepsis_raw_df,
-                                                   len(sepsis_raw_df.columns),
+    series_sepsis_df = prepare_time_series_dataset(df_series_sepsis,
+                                                   len(df_series_sepsis.columns),
                                                    columns)
 
     # exclude patients from non sepsis if they are in sepsis file

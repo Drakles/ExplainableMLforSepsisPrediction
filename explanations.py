@@ -18,15 +18,18 @@ def get_interaction_values(explainer, X_display):
 
 
 def summary_plot(shap_interaction_values, X_display):
-    shap.summary_plot(shap_interaction_values, X_display)
+    shap.summary_plot(shap_interaction_values, X_display,
+                      max_display=X.shape[1])
 
 
 def features_interaction_bar(shap_values, X, X_display):
     shap.summary_plot(shap_values=shap_values, features=X,
-                      feature_names=X_display.columns.values, plot_type='bar')
+                      feature_names=X_display.columns.values, plot_type='bar',
+                      max_display=X.shape[1])
 
 
-def dependency_plot_by_feature(column_index, X):
+def dependency_plot_by_feature(column_name, X):
+    column_index = X.columns.get_loc(column_name)
     shap.dependence_plot(column_index, explainer.shap_values(X), X)
 
 
