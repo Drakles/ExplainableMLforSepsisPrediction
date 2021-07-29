@@ -8,12 +8,22 @@ from static_data import get_xgboost_X_enhanced
 # notebook for dependency plot:
 # https://slundberg.github.io/shap/notebooks/plots/dependence_plot.html
 
+# https://slundberg.github.io/shap/notebooks/League%20of%20Legends%20Win
+# %20Prediction%20with%20XGBoost.html
+
+# https://slundberg.github.io/shap/notebooks/NHANES%20I%20Survival%20Model.html
+
 def get_interaction_values(explainer, X_display):
     return explainer.shap_interaction_values(X_display)
 
 
 def summary_plot(shap_interaction_values, X_display):
     shap.summary_plot(shap_interaction_values, X_display)
+
+
+def features_interaction_bar(shap_values, X, X_display):
+    shap.summary_plot(shap_values=shap_values, features=X,
+                      feature_names=X_display.columns.values, plot_type='bar')
 
 
 def dependency_plot_by_feature(column_index, X):

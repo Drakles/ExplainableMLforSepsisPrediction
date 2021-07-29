@@ -27,7 +27,8 @@ def read_prepare_static_data():
 
 def get_xgboost_X_enhanced():
     df_static_sepsis, df_static_non_sepsis = read_prepare_static_data()
-    df_ts_pred, X_series = fit_predict_time_series_separate_classification()
+    df_ts_pred, X_series, _ = \
+        fit_predict_time_series_separate_classification()
     X, y = merge_static_series_pred(df_static_non_sepsis,
                                     df_static_sepsis,
                                     df_ts_pred)
