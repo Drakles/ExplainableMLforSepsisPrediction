@@ -7,10 +7,8 @@ from sktime.classification.compose import TimeSeriesForestClassifier, \
     ColumnEnsembleClassifier
 from sktime.transformers.series_as_features.compose import ColumnConcatenator
 
-from time_series.prepare_dataset import prepare_time_series_dataset, \
-    summary_missing_val
+from time_series.prepare_dataset import prepare_time_series_dataset
 from utils import get_train_test_time_series_dataset
-from ast import literal_eval
 
 
 def read_prepare_series_dataset():
@@ -22,7 +20,7 @@ def read_prepare_series_dataset():
 
     # shared features
     columns = sorted(list(set(df_series_sepsis.columns.values)
-                          .intersection(
+        .intersection(
         set(df_series_non_sepsis.columns.values))))
     columns = [col for col in columns if col not in columns_to_drop]
     columns.insert(0, 'PatientID')
@@ -94,11 +92,10 @@ def fit_predict_time_series_column_ensemble():
     return df_pred, X, y
 
 
-def fit_predict_time_series_separate_classification():
-    series_non_sepsis_df = pd.read_pickle(
-        '../data/preprocessed_data/series_non_sepsis.pkl')
-    series_sepsis_df = pd.read_pickle(
-        '../data/preprocessed_data/series_sepsis.pkl')
+def fit_predict_time_series_separate_classification(sepsis_path,
+                                                    non_sepsis_path):
+    series_non_sepsis_df = pd.read_pickle(sepsis_path)
+    series_sepsis_df = pd.read_pickle(non_sepsis_path)
 
     X = series_non_sepsis_df.append(series_sepsis_df)
     y = np.array(['non_sepsis' for _ in range(len(series_non_sepsis_df))] +
@@ -113,14 +110,15 @@ def fit_predict_time_series_separate_classification():
                                                             random_state=2137)
         feature_name = str(X.columns[f_index]) \
             .replace('[', '-') \
-            .replace(']', '')
+            .replace(']', '') \
+            + ' -TSP'
         clf = TimeSeriesForestClassifier(n_estimators=5,
                                          class_weight='balanced')
         clf.fit(X_train, y_train)
-        print('feature: ' + feature_name)
-        print(clf.score(X_test, y_test))
-        print('f1 score: ' + str(f1_score(y_test, clf.predict(X_test),
-                                          average='weighted')))
+        # print('feature: ' + feature_name)
+        # print(clf.score(X_test, y_test))
+        # print('f1 score: ' + str(f1_score(y_test, clf.predict(X_test),
+        #                                   average='weighted')))
 
         predictions_per_feature[feature_name] = clf.predict_proba(
             X_one_column).T[1]
@@ -129,5 +127,7 @@ def fit_predict_time_series_separate_classification():
 
 
 if __name__ == '__main__':
-    # pred, X, y = fit_predict_time_series_separate_classification()
-    pred, X,y = fit_predict_time_series_column_ensemble()
+    pred, X, y = fit_predict_time_series_separate_classification(
+        '../data/preprocessed_data/series_non_sepsis.pkl',
+        '../data/preprocessed_data/series_sepsis.pkl')
+    # pred, X, y = fit_predict_time_series_column_ensemble()
