@@ -13,9 +13,6 @@ from static_data import get_xgboost_X_enhanced
 
 # https://slundberg.github.io/shap/notebooks/NHANES%20I%20Survival%20Model.html
 
-def get_interaction_values(explainer, X_display):
-    return explainer.shap_interaction_values(X_display)
-
 
 def summary_plot(shap_interaction_values, X_display):
     shap.summary_plot(shap_interaction_values, X_display,
@@ -33,8 +30,8 @@ def dependency_plot_by_feature(column_name, X):
     shap.dependence_plot(column_index, explainer.shap_values(X), X)
 
 
-def beeswarm_plot(explainer, X):
-    shap.plots.beeswarm(explainer(X))
+def beeswarm_plot(shap_values):
+    shap.plots.beeswarm(shap_values)
 
 
 def plot_matrix(shap_interaction_values, X_display):
@@ -68,4 +65,4 @@ if __name__ == '__main__':
 
     explainer = shap.TreeExplainer(model)
     shap_values = explainer(X)
-    shap_interaction_values = get_interaction_values(explainer, X)
+    shap_interaction_values = explainer.shap_interaction_values(X)

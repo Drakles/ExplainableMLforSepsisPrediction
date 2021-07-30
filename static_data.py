@@ -7,6 +7,8 @@ from sklearn.preprocessing import LabelEncoder
 from time_series.sktime_experiments import \
     fit_predict_time_series_separate_classification
 from utils import merge_static_series_pred
+from sklearn.utils import class_weight
+import matplotlib.pyplot as plt
 
 
 def read_prepare_static_data():
@@ -28,7 +30,9 @@ def read_prepare_static_data():
 def get_xgboost_X_enhanced():
     df_static_sepsis, df_static_non_sepsis = read_prepare_static_data()
     df_ts_pred, X_series, _ = \
-        fit_predict_time_series_separate_classification()
+        fit_predict_time_series_separate_classification(
+            './data/preprocessed_data/series_non_sepsis.pkl',
+            './data/preprocessed_data/series_sepsis.pkl')
     X, y = merge_static_series_pred(df_static_non_sepsis,
                                     df_static_sepsis,
                                     df_ts_pred)
@@ -40,8 +44,24 @@ def get_xgboost_X_enhanced():
         encoders.append(le)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=2137)
-    model = xgb.XGBClassifier()
-    model.fit(X_train, y_train)
+    # model = xgb.XGBClassifier()
+
+    classes_weights = class_weight.compute_sample_weight(
+        class_weight='balanced',
+        y=y_train
+    )
+    param = {'max_depth': X.columns.shape[0], 'objective': 'binary:logistic',
+             'nthread': 4}
+
+    model = xgb.XGBClassifier(**param)
+    model.fit(X_train, y_train, sample_weight=classes_weights)
+
+    # le = LabelEncoder()
+    # dtrain = xgb.DMatrix(X_train, label=le.fit_transform(y_train), weight=classes_weights)
+    #
+    # model = xgb.train(param, dtrain)
+
+    # model.fit(X_train, y_train, sample_weight=classes_weights)
     print('mean accuracy: ' + str(model.score(X_test, y_test)))
     print('f1 score: ' + str(f1_score(y_test, model.predict(X_test),
                                       average='weighted')))
@@ -56,5 +76,10 @@ def get_xgboost_X_enhanced():
     return model, X, X_display, y
 
 
+def plot_tree(model):
+    xgb.plot_tree(model)
+    plt.show()
+
+
 if __name__ == '__main__':
-    get_xgboost_X_enhanced()
+    model, X, X_display, y = get_xgboost_X_enhanced()
