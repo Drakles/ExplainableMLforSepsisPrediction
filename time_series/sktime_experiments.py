@@ -10,33 +10,27 @@ from sktime.transformers.series_as_features.compose import ColumnConcatenator
 from time_series.prepare_dataset import prepare_time_series_dataset, \
     summary_missing_val
 from utils import get_train_test_time_series_dataset
+from ast import literal_eval
 
 
 def read_prepare_series_dataset():
-    df_series_non_sepsis = pd.read_csv('./data/FinalNonSepsisSeries.csv')
-    df_series_sepsis = pd.read_csv('./data/FinalSepsisSeries.csv')
-
-    # print('missing for non sepsis')
-    # summary_missing_val(non_sepsis_raw_df)
-    #
-    # print('missing for sepsis')
-    # summary_missing_val(sepsis_raw_df)
+    df_series_non_sepsis = pd.read_csv('../data/FinalNonSepsisSeries.csv')
+    df_series_sepsis = pd.read_csv('../data/FinalSepsisSeries.csv')
 
     columns_to_drop = ['PatientID', 'Day', 'OrdinalHour', 'Mortality14Days',
                        'comorbidity', 'Admit Ht']
 
     # shared features
     columns = sorted(list(set(df_series_sepsis.columns.values)
-                          .intersection(df_series_non_sepsis.columns.values)))
+                          .intersection(
+        set(df_series_non_sepsis.columns.values))))
     columns = [col for col in columns if col not in columns_to_drop]
     columns.insert(0, 'PatientID')
 
     series_non_sepsis_df = prepare_time_series_dataset(df_series_non_sepsis,
-                                                       len(df_series_non_sepsis.columns),
                                                        columns)
 
     series_sepsis_df = prepare_time_series_dataset(df_series_sepsis,
-                                                   len(df_series_sepsis.columns),
                                                    columns)
 
     # exclude patients from non sepsis if they are in sepsis file
@@ -80,7 +74,10 @@ def column_ensemble(X_train, y_train, nb_features):
 
 
 def fit_predict_time_series_column_ensemble():
-    series_non_sepsis_df, series_sepsis_df = read_prepare_series_dataset()
+    series_non_sepsis_df = pd.read_pickle(
+        '../data/preprocessed_data/series_non_sepsis.pkl')
+    series_sepsis_df = pd.read_pickle(
+        '../data/preprocessed_data/series_sepsis.pkl')
 
     (X_train, X_test, y_train,
      y_test), X, y = get_train_test_time_series_dataset(
@@ -98,7 +95,10 @@ def fit_predict_time_series_column_ensemble():
 
 
 def fit_predict_time_series_separate_classification():
-    series_non_sepsis_df, series_sepsis_df = read_prepare_series_dataset()
+    series_non_sepsis_df = pd.read_pickle(
+        '../data/preprocessed_data/series_non_sepsis.pkl')
+    series_sepsis_df = pd.read_pickle(
+        '../data/preprocessed_data/series_sepsis.pkl')
 
     X = series_non_sepsis_df.append(series_sepsis_df)
     y = np.array(['non_sepsis' for _ in range(len(series_non_sepsis_df))] +
@@ -117,10 +117,10 @@ def fit_predict_time_series_separate_classification():
         clf = TimeSeriesForestClassifier(n_estimators=5,
                                          class_weight='balanced')
         clf.fit(X_train, y_train)
-        # print('feature: ' + feature_name)
-        # print(clf.score(X_test, y_test))
-        # print('f1 score: ' + str(f1_score(y_test, clf.predict(X_test),
-        #                                   average='weighted')))
+        print('feature: ' + feature_name)
+        print(clf.score(X_test, y_test))
+        print('f1 score: ' + str(f1_score(y_test, clf.predict(X_test),
+                                          average='weighted')))
 
         predictions_per_feature[feature_name] = clf.predict_proba(
             X_one_column).T[1]
@@ -129,5 +129,5 @@ def fit_predict_time_series_separate_classification():
 
 
 if __name__ == '__main__':
-    pred, X, y = fit_predict_time_series_separate_classification()
-    # pred, X,y = fit_predict_time_series_column_ensemble()
+    # pred, X, y = fit_predict_time_series_separate_classification()
+    pred, X,y = fit_predict_time_series_column_ensemble()
