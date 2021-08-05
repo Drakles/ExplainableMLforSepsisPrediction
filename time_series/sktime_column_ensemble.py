@@ -1,53 +1,12 @@
 import numpy as np
 import pandas as pd
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sktime.classification.compose import TimeSeriesForestClassifier, \
     ColumnEnsembleClassifier
-from sktime.transformers.series_as_features.compose import ColumnConcatenator
 
-from time_series.prepare_dataset import prepare_time_series_dataset
 from utils import get_train_test_time_series_dataset
-
-
-def read_prepare_series_dataset():
-    df_series_non_sepsis = pd.read_csv('../data/FinalNonSepsisSeries.csv')
-    df_series_sepsis = pd.read_csv('../data/FinalSepsisSeries.csv')
-
-    columns_to_drop = ['PatientID', 'Day', 'OrdinalHour', 'Mortality14Days',
-                       'comorbidity', 'Admit Ht']
-
-    # shared features
-    columns = sorted(list(set(df_series_sepsis.columns.values)
-        .intersection(
-        set(df_series_non_sepsis.columns.values))))
-    columns = [col for col in columns if col not in columns_to_drop]
-    columns.insert(0, 'PatientID')
-
-    series_non_sepsis_df = prepare_time_series_dataset(df_series_non_sepsis,
-                                                       columns)
-
-    series_sepsis_df = prepare_time_series_dataset(df_series_sepsis,
-                                                   columns)
-
-    # exclude patients from non sepsis if they are in sepsis file
-    series_non_sepsis_df = series_non_sepsis_df[
-        ~series_non_sepsis_df.index.isin(series_sepsis_df.index.values)]
-
-    return series_non_sepsis_df, series_sepsis_df
-
-
-def column_concatenate_clf(X_train, y_train):
-    steps = [
-        ("concatenate", ColumnConcatenator()),
-        ("classify", TimeSeriesForestClassifier(class_weight='balanced',
-                                                verbose=True,
-                                                n_jobs=-1)),
-    ]
-    clf = Pipeline(steps, verbose=True)
-    clf.fit(X_train, y_train)
-    return clf
 
 
 def get_estimators(nb_features):
@@ -83,7 +42,6 @@ def fit_predict_time_series_column_ensemble():
         series_sepsis_df)
 
     model = column_ensemble(X_train, y_train, len(X.columns))
-    # print(model.score(X_test, y_test))
     print('f1 score: ' + str(f1_score(y_test, model.predict(X_test),
                                       average='weighted')))
     df_pred = pd.DataFrame(data={'TSPred': model.predict_proba(X).T[1],
@@ -109,9 +67,9 @@ def fit_predict_time_series_separate_classification(sepsis_path,
         X_train, X_test, y_train, y_test = train_test_split(X_one_column, y,
                                                             random_state=2137)
         feature_name = str(X.columns[f_index]) \
-            .replace('[', '-') \
-            .replace(']', '') \
-            + ' -TSP'
+                           .replace('[', '-') \
+                           .replace(']', '') \
+                       + ' -TSP'
         clf = TimeSeriesForestClassifier(n_estimators=5,
                                          class_weight='balanced')
         clf.fit(X_train, y_train)
@@ -127,7 +85,25 @@ def fit_predict_time_series_separate_classification(sepsis_path,
 
 
 if __name__ == '__main__':
-    pred, X, y = fit_predict_time_series_separate_classification(
-        '../data/preprocessed_data/series_non_sepsis.pkl',
-        '../data/preprocessed_data/series_sepsis.pkl')
-    # pred, X, y = fit_predict_time_series_column_ensemble()
+    series_non_sepsis_df = pd.read_pickle(
+        '../data/preprocessed_data/union_features/series_non_sepsis.pkl')
+    series_sepsis_df = pd.read_pickle(
+        '../data/preprocessed_data/union_features/series_sepsis.pkl')
+
+    (X_train, X_test, y_train,
+     y_test), X, y = get_train_test_time_series_dataset(
+        series_non_sepsis_df,
+        series_sepsis_df)
+
+    model = ColumnEnsembleClassifier(
+        estimators=get_estimators(nb_features=X.shape[1]), verbose=True)
+
+    model.fit(X_train, y_train)
+
+    print('f1 score: ' + str(f1_score(y_test, model.predict(X_test),
+                                      average='weighted')))
+    predictions = model.predict_proba(X_test)
+    print('roc auc: ' + str(roc_auc_score(y_test, predictions[:, 1])))
+
+    # f1 score: 0.979812122398813
+    # roc auc: 0.9979838709677419
