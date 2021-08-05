@@ -4,7 +4,7 @@ from sklearn.metrics import f1_score, roc_curve, auc
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-from time_series.sktime_experiments import \
+from time_series.sktime_column_ensemble import \
     fit_predict_time_series_separate_classification
 from utils import merge_static_series_pred
 from sklearn.utils import class_weight
@@ -18,12 +18,19 @@ def read_prepare_static_data():
 
     df_static_non_sepsis = df_static_non_sepsis.drop('deathperiod',
                                                      axis='columns')
+    # remove duplicate IDs
+    df_static_non_sepsis = df_static_non_sepsis.\
+        drop_duplicates(subset='PatientID', keep=False)
+
     df_static_sepsis = df_static_sepsis.drop('deathperiod',
                                              axis='columns')
+    # remove duplicate IDs
+    df_static_sepsis = df_static_sepsis.\
+        drop_duplicates(subset='PatientID', keep=False)
 
-    # exclude patients from non sepsis if they are in sepsis file
-    df_static_non_sepsis = df_static_non_sepsis[
-        ~df_static_non_sepsis.index.isin(df_static_sepsis.index.values)]
+    if not set(df_static_sepsis['PatientID']).isdisjoint(set(
+            df_static_non_sepsis['PatientID'])):
+        raise ValueError('overlapping patients id in short and series')
 
     return df_static_non_sepsis, df_static_sepsis
 
@@ -99,7 +106,6 @@ def get_xgboost_X_enhanced():
                                       average='weighted')))
     predictions = model.predict_proba(X_test)
     print('roc auc: ' + str(roc_auc_score(y_test, predictions[:, 1])))
-
     # plot_roc_auc(y_test, predictions)
 
     # build X_display
