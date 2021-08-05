@@ -78,8 +78,8 @@ def get_xgboost_X_enhanced():
     df_static_sepsis, df_static_non_sepsis = read_prepare_static_data()
     df_ts_pred, X_series, _ = \
         fit_predict_time_series_separate_classification(
-            './data/preprocessed_data/series_non_sepsis.pkl',
-            './data/preprocessed_data/series_sepsis.pkl')
+            './data/preprocessed_data/union_features/series_non_sepsis.pkl',
+            './data/preprocessed_data/union_features/series_sepsis.pkl')
     X, y = merge_static_series_pred(df_static_non_sepsis,
                                     df_static_sepsis,
                                     df_ts_pred)

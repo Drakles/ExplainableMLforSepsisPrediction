@@ -34,8 +34,7 @@ def prepare_time_series_dataset(df, selected_features):
             df.loc[df['PatientID'] == patientID, selected_features] = \
                 df[df['PatientID'] == patientID][selected_features] \
                     .interpolate(method='pad', limit_direction='forward') \
-                    .interpolate(method='bfill') \
-                    .tail(24)
+                    .interpolate(method='bfill')
         else:
             df = df.drop(df[df['PatientID'] == patientID].index)
 
@@ -46,9 +45,10 @@ def prepare_time_series_dataset(df, selected_features):
     patient_id_series = {}
 
     for id, patient_id_df in df.groupby('PatientID'):
-        patient_id_series[id] = [id] + [patient_id_df[sel_col]
-                                            .reset_index(drop=True)
-                                        for sel_col in selected_features]
+            patient_id_series[id] = [id] + [patient_id_df[sel_col]
+                                                .tail(24)
+                                                .reset_index(drop=True)
+                                            for sel_col in selected_features]
 
     result_df = pd.DataFrame. \
         from_dict(patient_id_series, "index", columns=df.columns) \
@@ -65,7 +65,7 @@ def knn_imputing(df):
     return df
 
 
-def save_df_interesetion_features(df_series_sepsis, df_series_non_sepsis,
+def save_df_intersection_features(df_series_sepsis, df_series_non_sepsis,
                                   columns_to_drop):
     columns = sorted(list(set(df_series_sepsis.columns.values)
         .intersection(
@@ -77,8 +77,9 @@ def save_df_interesetion_features(df_series_sepsis, df_series_non_sepsis,
                                                    columns)
 
     series_non_sepsis_df.to_pickle(
-        '../data/preprocessed_data/series_non_sepsis.pkl')
-    series_sepsis_df.to_pickle('../data/preprocessed_data/series_sepsis.pkl')
+        '../data/preprocessed_data/union_features/series_non_sepsis.pkl')
+    series_sepsis_df.to_pickle(
+        '../data/preprocessed_data/union_features/series_sepsis.pkl')
 
 
 if __name__ == '__main__':
@@ -91,5 +92,5 @@ if __name__ == '__main__':
                        'Hour', 'weight', 'Age']
 
     # use only shared features
-    save_df_interesetion_features(df_series_sepsis, df_series_non_sepsis,
+    save_df_intersection_features(df_series_sepsis, df_series_non_sepsis,
                                   columns_to_drop)

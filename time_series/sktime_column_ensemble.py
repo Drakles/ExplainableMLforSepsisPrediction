@@ -52,8 +52,8 @@ def fit_predict_time_series_column_ensemble():
 
 def fit_predict_time_series_separate_classification(sepsis_path,
                                                     non_sepsis_path):
-    series_non_sepsis_df = pd.read_pickle(sepsis_path)
-    series_sepsis_df = pd.read_pickle(non_sepsis_path)
+    series_non_sepsis_df = pd.read_pickle(non_sepsis_path)
+    series_sepsis_df = pd.read_pickle(sepsis_path)
 
     X = series_non_sepsis_df.append(series_sepsis_df)
     y = np.array(['non_sepsis' for _ in range(len(series_non_sepsis_df))] +
@@ -70,15 +70,16 @@ def fit_predict_time_series_separate_classification(sepsis_path,
                            .replace('[', '-') \
                            .replace(']', '') \
                        + ' -TSP'
-        clf = TimeSeriesForestClassifier(n_estimators=5,
+        model = TimeSeriesForestClassifier(n_estimators=5,
                                          class_weight='balanced')
-        clf.fit(X_train, y_train)
+        model.fit(X_train, y_train)
         # print('feature: ' + feature_name)
-        # print(clf.score(X_test, y_test))
-        # print('f1 score: ' + str(f1_score(y_test, clf.predict(X_test),
+        # print('f1 score: ' + str(f1_score(y_test, model.predict(X_test),
         #                                   average='weighted')))
+        # print('roc auc: ' + str(roc_auc_score(y_test, model.
+        #                                       predict_proba(X_test)[:, 1])))
 
-        predictions_per_feature[feature_name] = clf.predict_proba(
+        predictions_per_feature[feature_name] = model.predict_proba(
             X_one_column).T[1]
 
     return pd.DataFrame(data=predictions_per_feature), X, y
