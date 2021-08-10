@@ -69,7 +69,7 @@ def partial_dependence(model, X, column_name, kind='both'):
 
 
 if __name__ == '__main__':
-    model, X, X_display, y = get_xgboost_X_enhanced()
+    model, X, y = get_xgboost_X_enhanced()
 
     explainer = shap.TreeExplainer(model)
     shap_values = explainer(X)
