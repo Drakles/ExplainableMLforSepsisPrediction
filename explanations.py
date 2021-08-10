@@ -1,6 +1,8 @@
 import numpy as np
 import pylab as pl
 import shap
+import matplotlib.pyplot as plt
+from sklearn.inspection import plot_partial_dependence
 
 from static_data import get_xgboost_X_enhanced
 
@@ -31,7 +33,7 @@ def dependency_plot_by_feature(column_name, X):
 
 
 def beeswarm_plot(shap_values):
-    shap.plots.beeswarm(shap_values)
+    shap.plots.beeswarm(shap_values,max_display=15)
 
 
 def plot_matrix(shap_interaction_values, X_display):
@@ -58,6 +60,12 @@ def single_force_plot(explainer, shap_values, X_display, index):
     shap.force_plot(explainer.expected_value, shap_values.values[index],
                     X_display.iloc[index],
                     matplotlib=True)
+
+
+def partial_dependence(model, X, column_name, kind='both'):
+    column_index = X.columns.get_loc(column_name)
+    plot_partial_dependence(model, X, [column_index], kind=kind)
+    plt.show()
 
 
 if __name__ == '__main__':
