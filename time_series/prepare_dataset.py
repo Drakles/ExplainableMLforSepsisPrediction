@@ -18,7 +18,7 @@ def summary_missing_val(dataframe):
     print('% of missing:' + str(sum(percent_missing) / len(percent_missing)))
 
 
-def prepare_time_series_dataset(df, selected_features):
+def process_time_series_dataset(df, selected_features):
     # filter for selected columns
     df = df[['PatientID'] + selected_features + ['Day', 'OrdinalHour']]
 
@@ -29,8 +29,9 @@ def prepare_time_series_dataset(df, selected_features):
     patientIDs = set(df['PatientID'])
 
     for patientID in patientIDs:
-        # single patients cannot have more than one same timestamp
+        # single patients cannot have more than one the same timestamp
         if df[df['PatientID'] == patientID]['TimeStamp'].is_unique:
+            # interpolate
             df.loc[df['PatientID'] == patientID, selected_features] = \
                 df[df['PatientID'] == patientID][selected_features] \
                     .interpolate(method='pad', limit_direction='forward') \
@@ -40,15 +41,17 @@ def prepare_time_series_dataset(df, selected_features):
 
     df = df.drop('TimeStamp', axis=1)
 
+    # impute values with KNNImputer
     df = knn_imputing(df)
 
     patient_id_series = {}
 
+    # change data format to 3D dataframe and limit time series to last 24 hours
     for id, patient_id_df in df.groupby('PatientID'):
-            patient_id_series[id] = [id] + [patient_id_df[sel_col]
-                                                .tail(24)
-                                                .reset_index(drop=True)
-                                            for sel_col in selected_features]
+        patient_id_series[id] = [id] + [patient_id_df[sel_col]
+                                            .tail(24)
+                                            .reset_index(drop=True)
+                                        for sel_col in selected_features]
 
     result_df = pd.DataFrame. \
         from_dict(patient_id_series, "index", columns=df.columns) \
@@ -67,14 +70,15 @@ def knn_imputing(df):
 
 def save_df_intersection_features(df_series_sepsis, df_series_non_sepsis,
                                   columns_to_drop):
-    columns = sorted(list(set(df_series_sepsis.columns.values)
+    features_intersection = sorted(list(set(df_series_sepsis.columns.values)
         .intersection(
         set(df_series_non_sepsis.columns.values))))
-    columns = [col for col in columns if col not in columns_to_drop]
-    series_non_sepsis_df = prepare_time_series_dataset(df_series_non_sepsis,
-                                                       columns)
-    series_sepsis_df = prepare_time_series_dataset(df_series_sepsis,
-                                                   columns)
+    selected_columns = [feature for feature in features_intersection
+                        if feature not in columns_to_drop]
+    series_non_sepsis_df = process_time_series_dataset(df_series_non_sepsis,
+                                                       selected_columns)
+    series_sepsis_df = process_time_series_dataset(df_series_sepsis,
+                                                   selected_columns)
 
     series_non_sepsis_df.to_pickle(
         '../data/preprocessed_data/union_features/series_non_sepsis.pkl')
