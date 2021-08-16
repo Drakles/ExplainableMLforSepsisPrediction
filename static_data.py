@@ -18,13 +18,13 @@ def read_prepare_static_data():
     df_static_non_sepsis = df_static_non_sepsis.drop('deathperiod',
                                                      axis='columns')
     # remove duplicate IDs
-    df_static_non_sepsis = df_static_non_sepsis.\
+    df_static_non_sepsis = df_static_non_sepsis. \
         drop_duplicates(subset='PatientID', keep=False)
 
     df_static_sepsis = df_static_sepsis.drop('deathperiod',
                                              axis='columns')
     # remove duplicate IDs
-    df_static_sepsis = df_static_sepsis.\
+    df_static_sepsis = df_static_sepsis. \
         drop_duplicates(subset='PatientID', keep=False)
 
     if not set(df_static_sepsis['PatientID']).isdisjoint(set(
@@ -58,14 +58,15 @@ def plot_roc_auc(y_test, predictions):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic example')
+    plt.title('Receiver operating characteristic for XGBoost')
     plt.legend(loc="lower right")
+    plt.savefig('output/roc_auc.png')
     plt.show()
 
 
 def get_xgboost_X_enhanced():
     df_static_non_sepsis, df_static_sepsis = read_prepare_static_data()
-    df_ts_pred, X_series, _ = \
+    df_ts_pred = \
         fit_predict_time_series_separate_classification(
             './data/preprocessed_data/union_features/series_non_sepsis.pkl',
             './data/preprocessed_data/union_features/series_sepsis.pkl')
@@ -73,7 +74,9 @@ def get_xgboost_X_enhanced():
                                     df_static_sepsis,
                                     df_ts_pred)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=2137)
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        random_state=2137,
+                                                        stratify=y)
 
     classes_weights = class_weight.compute_sample_weight(
         class_weight='balanced',
