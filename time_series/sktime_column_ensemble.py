@@ -59,11 +59,15 @@ def fit_predict_time_series_column_ensemble():
 def fit_predict_time_series_separate_classification(sepsis_df_path,
                                                     non_sepsis_df_path):
     series_non_sepsis_df = pd.read_pickle(non_sepsis_df_path)
+    series_non_sepsis_df['Label'] = np.array(['non_sepsis' for _ in range(
+        len(series_non_sepsis_df))])
     series_sepsis_df = pd.read_pickle(sepsis_df_path)
+    series_sepsis_df['Label'] = np.array(['sepsis' for _ in range(
+        len(series_sepsis_df))])
 
     X = series_non_sepsis_df.append(series_sepsis_df)
-    y = np.array(['non_sepsis' for _ in range(len(series_non_sepsis_df))] +
-                 ['sepsis' for _ in range(len(series_sepsis_df))], dtype=object)
+    y = X['Label']
+    X = X.drop('Label', axis=1)
 
     predictions_per_feature = {}
     predictions_per_feature['PatientID'] = np.array(X.index, dtype=int)
@@ -84,7 +88,7 @@ def fit_predict_time_series_separate_classification(sepsis_df_path,
                                            class_weight='balanced')
         model.fit(X_train, y_train)
 
-        print('feature: ' + feature_name)
+        # print('feature: ' + feature_name)
         f1_score_val = f1_score(y_test, model.predict(X_test),
                                 average='weighted')
         roc_auc_score_val = roc_auc_score(y_test, model.
@@ -92,14 +96,14 @@ def fit_predict_time_series_separate_classification(sepsis_df_path,
         f1_scores.append(f1_score_val)
         roc_auc_scores.append(roc_auc_score_val)
 
-        print('f1 score: ' + str(f1_score_val))
-        print('roc auc: ' + str(roc_auc_score_val))
+        # print('f1 score: ' + str(f1_score_val))
+        # print('roc auc: ' + str(roc_auc_score_val))
 
         predictions_per_feature[feature_name] = model.predict_proba(
             X_one_column).T[1]
 
-    print('f1 average: ' + str(sum(f1_scores) / len(f1_scores)))
-    print('roc auc average: ' + str(sum(roc_auc_scores) / len(roc_auc_scores)))
+    # print('f1 average: ' + str(sum(f1_scores) / len(f1_scores)))
+    # print('roc auc average: ' + str(sum(roc_auc_scores) / len(roc_auc_scores)))
 
     return pd.DataFrame(data=predictions_per_feature)
 
