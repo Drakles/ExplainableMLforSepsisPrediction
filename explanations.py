@@ -16,14 +16,14 @@ from static_data import get_xgboost_X_enhanced
 # https://slundberg.github.io/shap/notebooks/NHANES%20I%20Survival%20Model.html
 
 
-def summary_plot(shap_interaction_values, X_display):
-    shap.summary_plot(shap_interaction_values, X_display,
+def summary_plot(shap_interaction_values):
+    shap.summary_plot(shap_interaction_values, X,
                       max_display=X.shape[1])
 
 
-def features_interaction_bar(shap_values, X, X_display):
-    shap.summary_plot(shap_values=shap_values, features=X,
-                      feature_names=X_display.columns.values, plot_type='bar',
+def features_interaction_bar(shap_values, X):
+    shap.summary_plot(shap_values=shap_values,
+                      feature_names=X.columns.values, plot_type='bar',
                       max_display=X.shape[1])
 
 
@@ -33,10 +33,19 @@ def dependency_plot_by_feature(column_name, X):
 
 
 def beeswarm_plot(shap_values):
-    shap.plots.beeswarm(shap_values,max_display=15)
+    shap.plots.beeswarm(shap_values, max_display=15)
 
 
-def plot_matrix(shap_interaction_values, X_display):
+def scatter_dependence_plot(feature_name):
+    shap.plots.scatter(shap_values[:, feature_name])
+
+
+def dependence_plot(feature_name, X):
+    shap.dependence_plot(feature_name, explainer.shap_values(X), X,
+                         interaction_index=None)
+
+
+def plot_matrix(shap_interaction_values, X):
     tmp = np.abs(shap_interaction_values).sum(0)
     for i in range(tmp.shape[0]):
         tmp[i, i] = 0
@@ -44,9 +53,9 @@ def plot_matrix(shap_interaction_values, X_display):
     tmp2 = tmp[inds, :][:, inds]
     pl.figure(figsize=(12, 12))
     pl.imshow(tmp2)
-    pl.yticks(range(tmp2.shape[0]), X_display.columns[inds], rotation=50.4,
+    pl.yticks(range(tmp2.shape[0]), X.columns[inds], rotation=50.4,
               horizontalalignment="right")
-    pl.xticks(range(tmp2.shape[0]), X_display.columns[inds], rotation=50.4,
+    pl.xticks(range(tmp2.shape[0]), X.columns[inds], rotation=50.4,
               horizontalalignment="left")
     pl.gca().xaxis.tick_top()
     pl.show()
@@ -56,9 +65,9 @@ def plot_waterfall(shap_values, index):
     shap.plots.waterfall(shap_values[index])
 
 
-def single_force_plot(explainer, shap_values, X_display, index):
+def single_force_plot(explainer, shap_values, X, index):
     shap.force_plot(explainer.expected_value, shap_values.values[index],
-                    X_display.iloc[index],
+                    X.iloc[index],
                     matplotlib=True)
 
 
