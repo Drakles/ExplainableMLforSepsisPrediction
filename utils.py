@@ -16,8 +16,7 @@ def merge_static_series_pred(df_static_non_sepsis,
     X = X_static.merge(df_ts_pred, how='left')
     X = X.set_index('PatientID')
 
-    y = np.array(
-        ['non_sepsis' for _ in range(len(df_static_non_sepsis))] +
-        ['sepsis' for _ in range(len(df_static_sepsis))], dtype=object)
+    y = X['Label']
+    X = X.drop('Label', axis=1)
 
     return X, y

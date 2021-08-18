@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import xgboost as xgb
+from numpy.random import normal
 from sklearn.metrics import f1_score, roc_curve, auc
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
@@ -11,21 +13,59 @@ from time_series.sktime_column_ensemble import \
 from utils import merge_static_series_pred
 
 
+def sample_old_age_with_distribution(df):
+    np.random.seed(2137)
+    data = normal(loc=65.79, scale=16.59, size=len(df['age']))
+    data = [age for age in data if age >= 89]
+    # data = np.rint(data)
+    limit = len(df['age'].loc[df['age'] > 89])
+    data = sorted(data)[:limit]
+
+    df.loc[df['age'] > 89, ['age']] = data
+    df['age'] = df['age'].astype(int)
+
+    return df
+
+
+def age_histogram(df, title):
+    _, _, _ = plt.hist(df['age'], bins=100)
+
+    plt.xlabel('The age of the patient')
+    plt.ylabel('Frequency')
+    plt.title(title)
+    plt.legend(loc="lower right")
+
+    plt.show()
+
+
 def read_prepare_static_data():
     df_static_sepsis = pd.read_csv('data/FinalSepsisCohort.csv')
     df_static_non_sepsis = pd.read_csv('data/FinalNonSepsisCohort.csv')
 
-    df_static_non_sepsis = df_static_non_sepsis.drop('deathperiod',
-                                                     axis='columns')
-    # remove duplicate IDs
-    df_static_non_sepsis = df_static_non_sepsis. \
-        drop_duplicates(subset='PatientID', keep=False)
+    df_static_non_sepsis['Label'] = np.array(['non_sepsis' for _ in range(
+        len(df_static_non_sepsis))])
 
-    df_static_sepsis = df_static_sepsis.drop('deathperiod',
-                                             axis='columns')
+    df_static_sepsis['Label'] = np.array(['sepsis' for _ in range(
+        len(df_static_sepsis))])
+
+    df = df_static_non_sepsis.append(df_static_sepsis)
+
+    # histogram of the age
+    # age_histogram(df, 'Distribution of the age before reconstruction')
+
+    df = df.drop('deathperiod', axis='columns')
+
+    # reconstruct the age distribution
+    df = sample_old_age_with_distribution(df)
+
     # remove duplicate IDs
-    df_static_sepsis = df_static_sepsis. \
-        drop_duplicates(subset='PatientID', keep=False)
+    df = df.drop_duplicates(subset='PatientID', keep=False)
+
+    # histogram of the age
+    # age_histogram(df, 'Distribution of the age after reconstruction')
+
+    df_static_sepsis = df.loc[df['Label'] == 'sepsis']
+    df_static_non_sepsis = df.loc[df['Label'] == 'non_sepsis']
 
     if not set(df_static_sepsis['PatientID']).isdisjoint(set(
             df_static_non_sepsis['PatientID'])):
@@ -68,8 +108,8 @@ def get_xgboost_X_enhanced():
     df_static_non_sepsis, df_static_sepsis = read_prepare_static_data()
     df_ts_pred = \
         fit_predict_time_series_separate_classification(
-            './data/preprocessed_data/union_features/series_non_sepsis.pkl',
-            './data/preprocessed_data/union_features/series_sepsis.pkl')
+            './data/preprocessed_data/union_features/series_sepsis.pkl',
+            './data/preprocessed_data/union_features/series_non_sepsis.pkl')
     X, y = merge_static_series_pred(df_static_non_sepsis,
                                     df_static_sepsis,
                                     df_ts_pred)
