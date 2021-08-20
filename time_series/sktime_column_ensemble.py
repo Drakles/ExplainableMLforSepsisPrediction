@@ -75,6 +75,10 @@ def fit_predict_time_series_separate_classification(sepsis_df_path,
     f1_scores = []
     roc_auc_scores = []
 
+    # X = X[['SpO2', 'Ionized Calcium', 'SaO2',
+    #        'Resp Rate (Spont)',
+    #        'Total Bilirubin', 'CaO2', 'Chloride']]
+
     for f_index in range(len(X.columns)):
         X_one_column = pd.DataFrame(X.iloc[:, f_index])
         X_train, X_test, y_train, y_test = train_test_split(X_one_column, y,
