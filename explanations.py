@@ -24,7 +24,7 @@ def summary_plot(shap_interaction_values):
 def features_interaction_bar(shap_values, X):
     shap.summary_plot(shap_values=shap_values,
                       feature_names=X.columns.values, plot_type='bar',
-                      max_display=X.shape[1])
+                      max_display=X.shape[1], plot_size=(18, 18))
 
 
 def dependency_plot_by_feature(column_name, X):
@@ -33,11 +33,17 @@ def dependency_plot_by_feature(column_name, X):
 
 
 def beeswarm_plot(shap_values):
-    shap.plots.beeswarm(shap_values, max_display=15)
+    shap.plots.beeswarm(shap_values, max_display=15, plot_size=(18, 18))
 
 
 def scatter_dependence_plot(feature_name):
     shap.plots.scatter(shap_values[:, feature_name])
+
+
+def scatter_dependence_with_interaction_with_other(shap_values, feature_name,
+                                                   other_feature_name):
+    shap.plots.scatter(shap_values[:, feature_name], color=shap_values[:,
+                                                           other_feature_name])
 
 
 def dependence_plot(feature_name, X):
@@ -83,3 +89,6 @@ if __name__ == '__main__':
     explainer = shap.TreeExplainer(model)
     shap_values = explainer(X)
     shap_interaction_values = explainer.shap_interaction_values(X)
+
+    # features_interaction_bar(shap_interaction_values, X)
+    beeswarm_plot(shap_values)
