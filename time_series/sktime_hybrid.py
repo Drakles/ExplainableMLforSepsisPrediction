@@ -20,7 +20,6 @@ def fit_predict_time_series_hybrid_classification(sepsis_path, non_sepsis_path):
     y = X['Label']
     X = X.drop('Label', axis=1)
 
-    X_arterial = X[['Arterial PaCO2', 'Arterial PaO2']]
     X_nbp = X[['NBP Mean', 'NBP [Diastolic]', 'NBP [Systolic]']]
     X_o2 = X[['SaO2', 'SpO2']]
 
@@ -32,10 +31,6 @@ def fit_predict_time_series_hybrid_classification(sepsis_path, non_sepsis_path):
 
     predictions_per_feature = {}
     predictions_per_feature['PatientID'] = np.array(X.index, dtype=int)
-
-    # arterial
-    update_predictions_per_feature_group(X_arterial, 'Arterial',
-                                         predictions_per_feature, y)
 
     # nbp
     update_predictions_per_feature_group(X_nbp, 'NBP-TSP',

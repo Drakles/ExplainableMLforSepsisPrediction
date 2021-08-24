@@ -16,12 +16,12 @@ from static_data import get_xgboost_X_enhanced
 # https://slundberg.github.io/shap/notebooks/NHANES%20I%20Survival%20Model.html
 
 
-def summary_plot(shap_interaction_values):
-    shap.summary_plot(shap_interaction_values, X,
+def summary_plot(shap_values):
+    shap.summary_plot(shap_values, X,
                       max_display=X.shape[1])
 
 
-def features_interaction_bar(shap_values, X):
+def features_importance_bar(shap_values, X):
     shap.summary_plot(shap_values=shap_values,
                       feature_names=X.columns.values, plot_type='bar',
                       max_display=X.shape[1], plot_size=(18, 18))
@@ -32,8 +32,9 @@ def dependency_plot_by_feature(column_name, X):
     shap.dependence_plot(column_index, explainer.shap_values(X), X)
 
 
-def beeswarm_plot(shap_values):
-    shap.plots.beeswarm(shap_values, max_display=15, plot_size=(18, 18))
+def beeswarm_plot(shap_values, max_display):
+    shap.plots.beeswarm(shap_values, max_display=max_display,
+                        plot_size=(18, 18))
 
 
 def scatter_dependence_plot(feature_name):
@@ -51,11 +52,19 @@ def dependence_plot(feature_name, X):
                          interaction_index=None)
 
 
-def plot_matrix(shap_interaction_values, X):
+def interaction_value_between_features(features_tuple,
+                                       shap_interaction_values, X):
+    shap.dependence_plot(
+        features_tuple,
+        shap_interaction_values, X,
+    )
+
+
+def plot_matrix(shap_interaction_values, X, limit):
     tmp = np.abs(shap_interaction_values).sum(0)
     for i in range(tmp.shape[0]):
         tmp[i, i] = 0
-    inds = np.argsort(-tmp.sum(0))[:50]
+    inds = np.argsort(-tmp.sum(0))[:limit]
     tmp2 = tmp[inds, :][:, inds]
     pl.figure(figsize=(12, 12))
     pl.imshow(tmp2)
@@ -88,7 +97,9 @@ if __name__ == '__main__':
 
     explainer = shap.TreeExplainer(model)
     shap_values = explainer(X)
+    print('calculating shap values completed')
     shap_interaction_values = explainer.shap_interaction_values(X)
+    print('calculating shap interaction values completed')
 
-    # features_interaction_bar(shap_interaction_values, X)
-    beeswarm_plot(shap_values)
+    features_importance_bar(shap_values, X)
+    beeswarm_plot(shap_values, 11)

@@ -3,14 +3,11 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 from numpy.random import normal
-from sklearn.metrics import f1_score, roc_curve, auc
-from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import train_test_split, cross_validate, \
+from sklearn.metrics import roc_curve, auc
+from sklearn.model_selection import cross_validate, \
     StratifiedKFold
 from sklearn.utils import class_weight
 
-from time_series.sktime_column_ensemble import \
-    fit_predict_time_series_separate_classification
 from time_series.sktime_hybrid import \
     fit_predict_time_series_hybrid_classification
 from utils import merge_static_series_pred
@@ -20,7 +17,6 @@ def sample_old_age_with_distribution(df):
     np.random.seed(2137)
     data = normal(loc=65.79, scale=16.59, size=len(df['age']))
     data = [age for age in data if age >= 89]
-    # data = np.rint(data)
     limit = len(df['age'].loc[df['age'] > 89])
     data = sorted(data)[:limit]
 
@@ -116,10 +112,6 @@ def get_xgboost_X_enhanced():
                                     df_static_sepsis,
                                     df_ts_pred)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        random_state=2137,
-                                                        stratify=y)
-
     fit_param = {'sample_weight': class_weight.compute_sample_weight(
         class_weight='balanced',
         y=y
@@ -134,15 +126,9 @@ def get_xgboost_X_enhanced():
                             scoring=['f1_weighted', 'roc_auc'], verbose=1,
                             cv=StratifiedKFold(), fit_params=fit_param)
 
-    print('f1 score:' + str(np.mean(scores['test_f1_weighted'])))
-    print('roc auc score: ' + str(np.mean(scores['test_roc_auc'])))
-    # model.fit(X_train, y_train, sample_weight=classes_weights)
-    #
-    # print('f1 score: ' + str(f1_score(y_test, model.predict(X_test),
-    #                                   average='weighted')))
-    # predictions = model.predict_proba(X_test)
-    # print('roc auc: ' + str(roc_auc_score(y_test, predictions[:, 1])))
-    # plot_roc_auc(y_test, predictions)
+    print('avg f1 score:' + str(np.mean(scores['test_f1_weighted'])))
+    print('avg roc auc score: ' + str(np.mean(scores['test_roc_auc'])))
+
     model.fit(X, y, sample_weight=fit_param['sample_weight'])
 
     return model, X, y
@@ -154,12 +140,4 @@ def plot_tree(model):
 
 
 if __name__ == '__main__':
-    # hybrid
-    # f1 score: 0.9231305962643748
-    # roc auc: 0.8983170976940448
-
-    # standard no time series features grouped
-    # f1 score: 0.9258595159954128
-    # roc auc: 0.9007235985429132
-
     model, X, y = get_xgboost_X_enhanced()
