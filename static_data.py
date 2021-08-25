@@ -116,9 +116,10 @@ def get_xgboost_X_enhanced():
         class_weight='balanced',
         y=y
     )}
-    model_param = {'max_depth': X.columns.shape[0],
+    model_param = {'max_depth': 8,
                    'objective': 'binary:logistic',
-                   'n_estimators': 300, 'booster': 'gbtree'}
+                   'n_estimators': 182, 'booster': 'gbtree',
+                   'random_state': 2137}
 
     model = xgb.XGBClassifier(**model_param)
 
