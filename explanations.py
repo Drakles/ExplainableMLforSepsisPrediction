@@ -7,24 +7,15 @@ from sklearn.inspection import plot_partial_dependence
 from static_data import get_xgboost_X_enhanced
 
 
-# notebook for dependency plot:
-# https://slundberg.github.io/shap/notebooks/plots/dependence_plot.html
-
-# https://slundberg.github.io/shap/notebooks/League%20of%20Legends%20Win
-# %20Prediction%20with%20XGBoost.html
-
-# https://slundberg.github.io/shap/notebooks/NHANES%20I%20Survival%20Model.html
-
-
 def summary_plot(shap_values):
     shap.summary_plot(shap_values, X,
                       max_display=X.shape[1])
 
 
-def features_importance_bar(shap_values, X):
+def features_importance_bar(shap_values, X, limit):
     shap.summary_plot(shap_values=shap_values,
                       feature_names=X.columns.values, plot_type='bar',
-                      max_display=X.shape[1], plot_size=(18, 18))
+                      max_display=limit, plot_size=(18, 18))
 
 
 def dependency_plot_by_feature(column_name, X):
@@ -34,11 +25,11 @@ def dependency_plot_by_feature(column_name, X):
 
 def beeswarm_plot(shap_values, max_display):
     shap.plots.beeswarm(shap_values, max_display=max_display,
-                        plot_size=(18, 18))
+                        plot_size=(24, 20))
 
 
 def scatter_dependence_plot(feature_name):
-    shap.plots.scatter(shap_values[:, feature_name])
+    shap.plots.scatter(shap_values[:, feature_name],x_jitter=0.5)
 
 
 def scatter_dependence_with_interaction_with_other(shap_values, feature_name,
@@ -96,10 +87,8 @@ if __name__ == '__main__':
     model, X, y = get_xgboost_X_enhanced()
 
     explainer = shap.TreeExplainer(model)
-    shap_values = explainer(X)
-    print('calculating shap values completed')
-    shap_interaction_values = explainer.shap_interaction_values(X)
-    print('calculating shap interaction values completed')
-
-    features_importance_bar(shap_values, X)
-    beeswarm_plot(shap_values, 11)
+    # shap_interaction_values = explainer.shap_interaction_values(X)
+    # print('calculating shap interaction values completed')
+    #
+    # features_importance_bar(explainer(X), X, 20)
+    # beeswarm_plot(explainer(X), 11)

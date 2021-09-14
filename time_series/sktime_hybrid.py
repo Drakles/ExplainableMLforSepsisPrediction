@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold, cross_val_predict
+from sklearn.model_selection import StratifiedKFold, cross_val_predict, \
+    cross_validate
 from sklearn.pipeline import Pipeline
 from sktime.classification.compose import TimeSeriesForestClassifier, \
     ColumnEnsembleClassifier
