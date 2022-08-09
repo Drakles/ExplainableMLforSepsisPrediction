@@ -13,7 +13,7 @@ from time_series.sktime_hybrid import \
 
 
 def sample_old_age_with_distribution(df):
-    np.random.seed(2137)
+    np.random.seed(1)
     data = normal(loc=65.79, scale=16.59, size=len(df['Age']))
     data = [age for age in data if age >= 89]
     limit = len(df['Age'].loc[df['Age'] > 89])
@@ -26,16 +26,15 @@ def sample_old_age_with_distribution(df):
 
 
 def age_histogram(df, bins):
-    _, _, _ = plt.hist(df['Age'], bins=bins)
+    plt.hist(df['Age'], bins=bins)
 
     plt.xlabel('Age of the patient')
     plt.ylabel('Count')
-    plt.legend(loc="lower right")
 
     plt.show()
 
 
-def read_prepare_static_data():
+def preprocess_static_data():
     df_static_sepsis = pd.read_csv('data/FinalSepsisCohort.csv')
     df_static_non_sepsis = pd.read_csv('data/FinalNonSepsisCohort.csv')
 
@@ -122,11 +121,12 @@ def merge_static_series_pred(df_static_non_sepsis,
     return X, y
 
 
-def get_xgboost_X_enhanced():
-    df_static_non_sepsis, df_static_sepsis = read_prepare_static_data()
+def train_xgboost():
+    df_static_non_sepsis, df_static_sepsis = preprocess_static_data()
     df_ts_pred = fit_predict_time_series_hybrid_classification(
         './data/preprocessed_data/union_features/series_sepsis.pkl',
         './data/preprocessed_data/union_features/series_non_sepsis.pkl')
+
     X, y = merge_static_series_pred(df_static_non_sepsis,
                                     df_static_sepsis,
                                     df_ts_pred)
@@ -149,8 +149,8 @@ def get_xgboost_X_enhanced():
     print('avg f1 score:' + str(np.mean(scores['test_f1_weighted'])))
     print('avg roc auc score: ' + str(np.mean(scores['test_roc_auc'])))
 
-    # plot_roc_auc(y, cross_val_predict(model, X, y, cv=StratifiedKFold(),
-    #                                   method='predict_proba'))
+    plot_roc_auc(y, cross_val_predict(model, X, y, cv=StratifiedKFold(),
+                                      method='predict_proba'))
 
     model.fit(X, y, sample_weight=fit_param['sample_weight'])
 
@@ -163,4 +163,4 @@ def plot_tree(model):
 
 
 if __name__ == '__main__':
-    model, X, y = get_xgboost_X_enhanced()
+    model, X, y = train_xgboost()

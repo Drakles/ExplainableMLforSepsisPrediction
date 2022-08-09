@@ -30,6 +30,3 @@ if __name__ == '__main__':
                                       average='weighted')))
     predictions = model.predict_proba(X_test)
     print('roc auc: ' + str(roc_auc_score(y_test, predictions[:, 1])))
-
-    # f1 score: 0.9332825436660429
-    # roc auc: 0.9859991039426523

@@ -21,11 +21,3 @@ def search_params(X, y, param_grid):
     print(CV.best_score_)
 
     return CV
-
-
-if __name__ == '__main__':
-    param_grid = {
-        'n_estimators': range(180, 300),
-        'max_depth': range(4, 15)
-    }
-    CV = search_params(X, y, param_grid)

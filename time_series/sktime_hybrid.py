@@ -63,10 +63,10 @@ def update_predictions_per_feature_group(X_feature_grouped, feature_group_name,
     model = Pipeline([('classify', ColumnEnsembleClassifier(get_estimators(
         len(X_feature_grouped.columns))),)])
 
-    # scores = cross_validate(model, X_feature_grouped, y,
-    #                         scoring=['f1_weighted', 'roc_auc'], verbose=1,
-    #                         cv=StratifiedKFold(shuffle=False))
-    # print(scores)
+    scores = cross_validate(model, X_feature_grouped, y,
+                            scoring=['f1_weighted', 'roc_auc'], verbose=1,
+                            cv=StratifiedKFold(shuffle=False))
+    print(f"cross validation scores: {scores}")
 
     predictions_per_feature[feature_group_name] = \
         cross_val_predict(model, X_feature_grouped, y, cv=StratifiedKFold(),

@@ -4,7 +4,7 @@ import shap
 import matplotlib.pyplot as plt
 from sklearn.inspection import plot_partial_dependence
 
-from static_data import get_xgboost_X_enhanced
+from static_data import train_xgboost
 
 
 def summary_plot(shap_values):
@@ -28,7 +28,7 @@ def beeswarm_plot(shap_values, max_display):
                         plot_size=(24, 20))
 
 
-def scatter_dependence_plot(feature_name):
+def scatter_dependence_plot(feature_name,shap_values):
     shap.plots.scatter(shap_values[:, feature_name],x_jitter=0.5)
 
 
@@ -84,11 +84,10 @@ def partial_dependence(model, X, column_name, kind='both'):
 
 
 if __name__ == '__main__':
-    model, X, y = get_xgboost_X_enhanced()
+    model, X, y = train_xgboost()
 
     explainer = shap.TreeExplainer(model)
-    # shap_interaction_values = explainer.shap_interaction_values(X)
-    # print('calculating shap interaction values completed')
-    #
-    # features_importance_bar(explainer(X), X, 20)
-    # beeswarm_plot(explainer(X), 11)
+    shap_interaction_values = explainer.shap_interaction_values(X)
+
+    features_importance_bar(explainer(X), X, 20)
+    beeswarm_plot(explainer(X), 11)

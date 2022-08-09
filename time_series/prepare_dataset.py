@@ -9,7 +9,6 @@ def summary_missing_val(dataframe):
     percent_missing = []
     print('Column name, Number of values, Number of missing, % of missing')
     for col in dataframe:
-        # count number of rows with missing values
         n_miss = dataframe[col].isnull().sum()
         total_val = len(dataframe[col]) - n_miss
         perc = n_miss / dataframe.shape[0] * 100
@@ -19,7 +18,7 @@ def summary_missing_val(dataframe):
 
 
 def process_time_series_dataset(df, selected_features):
-    # filter for selected columns
+    # filter by selected columns
     df = df[['PatientID'] + selected_features + ['Day', 'OrdinalHour']]
 
     df['TimeStamp'] = df.Day.astype(str).str.cat(df.OrdinalHour.astype(str),
@@ -29,7 +28,6 @@ def process_time_series_dataset(df, selected_features):
     patientIDs = set(df['PatientID'])
 
     for patientID in patientIDs:
-        # single patients cannot have more than one the same timestamp
         if df[df['PatientID'] == patientID]['TimeStamp'].is_unique:
             # interpolate
             df.loc[df['PatientID'] == patientID, selected_features] = \
@@ -37,6 +35,7 @@ def process_time_series_dataset(df, selected_features):
                     .interpolate(method='pad', limit_direction='forward') \
                     .interpolate(method='bfill')
         else:
+            # drop repeated ids
             df = df.drop(df[df['PatientID'] == patientID].index)
 
     df = df.drop('TimeStamp', axis=1)
